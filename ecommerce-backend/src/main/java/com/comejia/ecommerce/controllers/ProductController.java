@@ -1,9 +1,9 @@
 package com.comejia.ecommerce.controllers;
 
-import com.comejia.ecommerce.exceptions.ProductNotFoundException;
 import com.comejia.ecommerce.models.dtos.requests.ProductRequestDto;
 import com.comejia.ecommerce.models.dtos.responses.ProductResponseDto;
 import com.comejia.ecommerce.services.ProductService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
@@ -30,52 +31,46 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<List<ProductResponseDto>> getProducts() {
+        log.info("REST: Fetching products");
         return ResponseEntity.ok(this.productService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDto> getProduct(@PathVariable Long id) {
-        return this.productService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        log.info("REST: Fetching product with ID: {}", id);
+        return ResponseEntity.ok(this.productService.findById(id));
     }
 
     @GetMapping(params = "name")
     public ResponseEntity<ProductResponseDto> getProductByName(@RequestParam String name) {
-        return this.productService.findByName(name)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        log.info("REST: Fetching product with name: {}", name);
+        return ResponseEntity.ok(this.productService.findByName(name));
     }
 
     @PostMapping
     public ResponseEntity<ProductResponseDto> createProduct(@RequestBody ProductRequestDto productRequest) {
-        try {
-            ProductResponseDto productResponse = this.productService.save(productRequest);
-            return ResponseEntity.status(HttpStatus.CREATED).body(productResponse);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        log.info("REST: Creating product");
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(this.productService.save(productRequest));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id, @RequestBody ProductRequestDto productRequest) {
-        try {
-            ProductResponseDto productResponse = this.productService.update(id, productRequest);
-            return ResponseEntity.status(HttpStatus.CREATED).body(productResponse);
-        } catch (ProductNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<ProductResponseDto> updateProduct(
+            @PathVariable Long id,
+            @RequestBody ProductRequestDto productRequest) {
+        log.info("REST: Updating product with ID: {}", id);
+
+        ProductResponseDto productResponse = this.productService.update(id, productRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(productResponse);
+
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        try {
-            this.productService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        } catch (ProductNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        log.info("REST: Deleting product with ID: {}", id);
+
+        this.productService.deleteById(id);
+        return ResponseEntity.noContent().build();
+
     }
 }
