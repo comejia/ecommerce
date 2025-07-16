@@ -7,6 +7,7 @@ import com.comejia.ecommerce.models.entities.Product;
 import com.comejia.ecommerce.models.mappers.ProductMapper;
 import com.comejia.ecommerce.repositories.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,21 +23,32 @@ public class ProductServiceImpl implements ProductService {
         this.productMapper = productMapper;
     }
 
+    @Transactional(readOnly = true)
     @Override
-    public Optional<ProductResponseDto> findById(Long id) {
-        return this.productRepository.findById(id).map(productMapper::toDto);
+    public ProductResponseDto findById(Long id) {
+        return this.productRepository.findById(id)
+                .map(productMapper::toDto)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + id));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<ProductResponseDto> findAll() {
-        return this.productRepository.findAll().stream().map(productMapper::toDto).toList();
+        return this.productRepository.findAll()
+                .stream()
+                .map(productMapper::toDto)
+                .toList();
     }
 
+    @Transactional(readOnly = true)
     @Override
-    public Optional<ProductResponseDto> findByName(String name) {
-        return this.productRepository.findByName(name).map(productMapper::toDto);
+    public ProductResponseDto findByName(String name) {
+        return this.productRepository.findByName(name)
+                .map(productMapper::toDto)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with name: " + name));
     }
 
+    @Transactional
     @Override
     public ProductResponseDto save(ProductRequestDto productRequestDto) {
         Product product = productMapper.toEntity(productRequestDto);
@@ -44,6 +56,7 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toDto(savedProduct);
     }
 
+    @Transactional
     @Override
     public ProductResponseDto update(Long id, ProductRequestDto productRequestDto) {
         Optional<Product> productOptional = this.productRepository.findById(id);
@@ -54,13 +67,14 @@ public class ProductServiceImpl implements ProductService {
                     Product updatedProduct = this.productRepository.save(product);
                     return productMapper.toDto(updatedProduct);
                 })
-                .orElseThrow(ProductNotFoundException::new);
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + id));
     }
 
+    @Transactional
     @Override
     public void deleteById(Long id) {
         if (!this.productRepository.existsById(id)) {
-            throw new ProductNotFoundException();
+            throw new ProductNotFoundException("Product not found with ID: " + id);
         }
         this.productRepository.deleteById(id);
     }
