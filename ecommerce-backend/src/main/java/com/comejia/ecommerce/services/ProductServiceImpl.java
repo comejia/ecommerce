@@ -34,7 +34,10 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     @Override
     public List<ProductResponseDto> findAll() {
-        return this.productRepository.findAll().stream().map(productMapper::toDto).toList();
+        return this.productRepository.findAll()
+                .stream()
+                .map(productMapper::toDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)

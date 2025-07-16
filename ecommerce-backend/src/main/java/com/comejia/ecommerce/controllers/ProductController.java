@@ -55,14 +55,12 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> updateProduct(
-            @PathVariable Long id,
-            @RequestBody ProductRequestDto productRequest) {
+    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id,
+                                                            @RequestBody ProductRequestDto productRequest) {
         log.info("REST: Updating product with ID: {}", id);
 
-        ProductResponseDto productResponse = this.productService.update(id, productRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(productResponse);
-
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(this.productService.update(id, productRequest));
     }
 
     @DeleteMapping("/{id}")
@@ -71,6 +69,5 @@ public class ProductController {
 
         this.productService.deleteById(id);
         return ResponseEntity.noContent().build();
-
     }
 }

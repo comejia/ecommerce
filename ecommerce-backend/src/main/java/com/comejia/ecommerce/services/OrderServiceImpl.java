@@ -11,9 +11,9 @@ import com.comejia.ecommerce.models.mappers.OrderMapper;
 import com.comejia.ecommerce.repositories.OrderRepository;
 import com.comejia.ecommerce.repositories.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -30,16 +30,24 @@ public class OrderServiceImpl implements OrderService {
         this.orderMapper = orderMapper;
     }
 
+    @Transactional(readOnly = true)
     @Override
-    public Optional<OrderResponseDto> findById(Long id) {
-        return this.orderRepository.findById(id).map(orderMapper::toDto);
+    public OrderResponseDto findById(Long id) {
+        return this.orderRepository.findById(id)
+                .map(orderMapper::toDto)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + id));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<OrderResponseDto> findAll() {
-        return this.orderRepository.findAll().stream().map(orderMapper::toDto).toList();
+        return this.orderRepository.findAll()
+                .stream()
+                .map(orderMapper::toDto)
+                .toList();
     }
 
+    @Transactional
     @Override
     public OrderResponseDto save(OrderRequestDto orderRequestDto) {
         Order order = new Order();
@@ -48,13 +56,15 @@ public class OrderServiceImpl implements OrderService {
                         .ifPresentOrElse(
                                 product -> {
                                     if (!product.hasStock(itemDto.getQuantity())) {
-                                        throw new InsufficientStockException();
+                                        throw new InsufficientStockException(
+                                                "Insufficient stock for product ID: " + itemDto.getProductId()
+                                        );
                                     }
                                     order.addItem(new Item(product, itemDto.getQuantity()));
                                     product.reduceStock(itemDto.getQuantity());
                                 },
                                 () -> {
-                                    throw new ProductNotFoundException();
+                                    throw new ProductNotFoundException("Product not found with ID: " + itemDto.getProductId());
                                 }
                         )
                 );
@@ -68,13 +78,14 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDto update(Long id, OrderRequestDto orderRequestDto) {
         return this.orderRepository.findById(id)
                 .map(orderMapper::toDto)
-                .orElseThrow(OrderNotFoundException::new);
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + id));
     }
 
+    @Transactional
     @Override
     public void deleteById(Long id) {
         if (!this.orderRepository.existsById(id)) {
-            throw new OrderNotFoundException();
+            throw new OrderNotFoundException("Order not found with ID: " + id);
         }
         this.orderRepository.deleteById(id);
     }

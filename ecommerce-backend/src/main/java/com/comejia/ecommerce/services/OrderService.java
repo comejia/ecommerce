@@ -4,11 +4,10 @@ import com.comejia.ecommerce.models.dtos.requests.OrderRequestDto;
 import com.comejia.ecommerce.models.dtos.responses.OrderResponseDto;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface OrderService {
 
-    Optional<OrderResponseDto> findById(Long id);
+    OrderResponseDto findById(Long id);
 
     List<OrderResponseDto> findAll();
 
